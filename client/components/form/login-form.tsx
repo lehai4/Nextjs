@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
+import authApiRequest from "@/apiRequest/auth";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -13,13 +14,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import envConfig from "@/config/env/config";
-import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
 import { useToast } from "@/components/ui/use-toast";
-import { useSessionContext } from "@/context/session-provider";
+import { LoginBody, LoginBodyType } from "@/schemaValidations/auth.schema";
+import { useRouter } from "next/navigation";
 
 const LoginForm = () => {
-  const { setSessionToken } = useSessionContext();
+  const router = useRouter();
   const { toast } = useToast();
   const form = useForm<LoginBodyType>({
     resolver: zodResolver(LoginBody),
@@ -31,48 +31,16 @@ const LoginForm = () => {
 
   async function onSubmit(values: LoginBodyType) {
     try {
-      const res = await fetch(
-        `${envConfig.NEXT_PUBLIC_API_ENDPOINT}/auth/login`,
-        {
-          method: "POST",
-          body: JSON.stringify(values),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      ).then(async (res) => {
-        const payload = await res.json();
-        const data = {
-          status: res.status,
-          payload,
-        };
-        if (!res.ok) {
-          throw data;
-        }
-        return data;
-      });
+      const res = await authApiRequest.login(values);
       toast({
         title: "Success",
         description: res.payload.message,
       });
-      const resultFromNextServer = await fetch("/api/auth", {
-        method: "POST",
-        body: JSON.stringify(res),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }).then(async (res) => {
-        const payload = await res.json();
-        const data = {
-          status: res.status,
-          payload,
-        };
-        if (!res.ok) {
-          throw data;
-        }
-        return data;
-      });
-      setSessionToken(resultFromNextServer.payload.data.token);
+
+      await authApiRequest.auth({ sessionToken: res.payload.data.token });
+      // setSessionToken(res.payload.data.token);
+      // clientSessionToken.value = res.payload.data.token;
+      router.push("/me");
     } catch (err: any) {
       const errors = err.payload.errors as {
         field: string;

@@ -5,7 +5,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/header";
 import { Toaster } from "@/components/ui/toaster";
-import SessionContextProvider from "@/context/session-provider";
+import SessionContextProvider, {
+  SessionProvider,
+} from "@/context/session-provider";
 import { cookies } from "next/headers";
 const inter = Inter({ subsets: ["vietnamese"] });
 
@@ -33,9 +35,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Header />
-          <SessionContextProvider initialSessionToken={sessionToken?.value}>
+          <SessionProvider initialSessionToken={sessionToken?.value}>
             {children}
-          </SessionContextProvider>
+          </SessionProvider>
+          {/* <SessionContextProvider initialSessionToken={sessionToken?.value}>
+            {children}
+          </SessionContextProvider> */}
         </ThemeProvider>
       </body>
     </html>

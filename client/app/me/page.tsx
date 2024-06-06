@@ -1,26 +1,10 @@
-import envConfig from "@/config/env/config";
+import accountApiRequest from "@/apiRequest/account";
 import { cookies } from "next/headers";
 
 const MeProfile = async () => {
   const cookieStore = cookies();
   const sessionToken = cookieStore.get("sessionToken");
-  const res = await fetch(`${envConfig.NEXT_PUBLIC_API_ENDPOINT}/account/me`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${sessionToken?.value}`,
-    },
-  }).then(async (res) => {
-    const payload = await res.json();
-    const data = {
-      status: res.status,
-      payload,
-    };
-    if (!res.ok) {
-      return;
-    }
-    return data;
-  });
+  const res = await accountApiRequest.me(sessionToken?.value as string);
 
   if (!res) {
     return <div className="text-red-500 text-[30px]">Imposibile call api</div>;

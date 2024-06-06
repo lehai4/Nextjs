@@ -1,4 +1,5 @@
 "use client";
+import { clientSessionToken } from "@/lib/http";
 import { createContext, useContext, useState } from "react";
 
 const SessionContext = createContext({
@@ -29,4 +30,18 @@ export default function SessionContextProvider({
       {children}
     </SessionContext.Provider>
   );
+}
+
+export function SessionProvider({
+  children,
+  initialSessionToken = "",
+}: {
+  children: React.ReactNode;
+  initialSessionToken?: string;
+}) {
+  useState(() => {
+    clientSessionToken.value = initialSessionToken;
+  });
+
+  return <>{children}</>;
 }

@@ -1,38 +1,16 @@
 "use client";
 
-import envConfig from "@/config/env/config";
-import { useSessionContext } from "@/context/session-provider";
+import accountApiRequest from "@/apiRequest/account";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 const Profile = () => {
-  const { sessionToken } = useSessionContext();
+  // const { sessionToken } = useSessionContext();
   const [cookies] = useCookies(["sessionToken"]); // nếu cookies có thuộc tính HttpOnly thi` ko dùng được
   const [profile, setProfile] = useState<any>();
   useEffect(() => {
     (async function getProfile() {
-      const res = await fetch(
-        `${envConfig.NEXT_PUBLIC_API_ENDPOINT}/account/me`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              sessionToken ? sessionToken : cookies.sessionToken
-            }`,
-          },
-        }
-      ).then(async (res) => {
-        const payload = await res.json();
-        const data = {
-          status: res.status,
-          payload,
-        };
-        if (!res.ok) {
-          throw data;
-        }
-        setProfile(data);
-        return data;
-      });
+      const res = await accountApiRequest.profile();
+      setProfile(res);
     })();
   }, []);
   return (

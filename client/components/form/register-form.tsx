@@ -13,14 +13,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import envConfig from "@/config/env/config";
 import {
   RegisterBody,
   RegisterBodyType,
 } from "@/schemaValidations/auth.schema";
 import { useToast } from "@/components/ui/use-toast";
+import authApiRequest from "@/apiRequest/auth";
+import { useRouter } from "next/navigation";
 
 const RegisterForm = () => {
+  const router = useRouter();
   const { toast } = useToast();
   const form = useForm<RegisterBodyType>({
     resolver: zodResolver(RegisterBody),
@@ -33,18 +35,40 @@ const RegisterForm = () => {
   });
 
   async function onSubmit(values: RegisterBodyType) {
-    await fetch(`${envConfig.NEXT_PUBLIC_API_ENDPOINT}/auth/register`, {
-      method: "POST",
-      body: JSON.stringify(values),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }).then((res) => res.json());
+    try {
+      const res = await authApiRequest.register(values);
+      toast({
+        title: "Success",
+        description: res.payload.message,
+      });
+      router.push("/login");
+    } catch (err: any) {
+      const errors = err.payload.errors as {
+        field: string;
+        message: string;
+      }[];
 
-    toast({
-      title: "success",
-      description: "Register successfully!",
-    });
+      const status = err.status as number;
+      if (status === 422) {
+        errors.forEach((error) => {
+          form.setError(error.field as "email" | "password", {
+            type: "server",
+            message: error.message,
+          });
+        });
+        toast({
+          title: "Error",
+          description: err.payload.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: err.payload.message,
+          variant: "destructive",
+        });
+      }
+    }
   }
   function onError(error: any) {
     console.log(error);
